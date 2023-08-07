@@ -23,4 +23,7 @@ func PostRouter(api *gin.RouterGroup) {
 	r.Use(middleware.JWTMiddleware())
 
 	r.POST("/", postHandler.Create)
+	r.PUT("/:id/update", postHandler.Update)
+	r.DELETE("/:id/delete", postHandler.Delete)
+	r.GET("/me", postHandler.MyTweet)
 }

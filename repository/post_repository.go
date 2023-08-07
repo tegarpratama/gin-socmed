@@ -14,6 +14,10 @@ type PostRepository interface {
 	FindAll(params *dto.FilterParams) (*[]dto.PostsResponse, error)
 	Detail(id *int) (dto.PostsResponse, error)
 	Create(post *entity.Post) error
+	Update(id int, post *entity.Post) error
+	Delete(id int) error
+	TotalMyTweet(userID int, params *dto.FilterParams) (int64, error)
+	AllMyTweet(userID int, params *dto.FilterParams) (*[]dto.PostsResponse, error)
 }
 
 type postRepository struct {
@@ -70,4 +74,46 @@ func (r *postRepository) Create(post *entity.Post) error {
 	err := r.db.Create(&post).Error
 
 	return err
+}
+
+func (r *postRepository) Update(id int, post *entity.Post) error {
+	err := r.db.Model(&post).Where("id = ?", id).Updates(&post).Error
+
+	return err
+}
+
+func (r *postRepository) Delete(id int) error {
+	var post entity.Post
+	err := r.db.Delete(&post, id).Error
+
+	return err
+}
+
+func (r *postRepository) TotalMyTweet(userID int, params *dto.FilterParams) (int64, error) {
+	var count int64
+	query := r.db.Model(&entity.Post{}).Where("user_id = ?", userID)
+
+	if params.Search != "" {
+		query.Where("tweet LIKE ?", fmt.Sprintf("%%%s%%", params.Search))
+	}
+
+	err := query.Count(&count)
+	if err != nil {
+		return count, err.Error
+	}
+
+	return count, nil
+}
+
+func (r *postRepository) AllMyTweet(userID int, params *dto.FilterParams) (*[]dto.PostsResponse, error) {
+	var postsResponse []dto.PostsResponse
+	query := r.db.Model(&entity.Post{}).Where("user_id = ?", userID)
+
+	if params.Search != "" {
+		query.Where("tweet LIKE ?", fmt.Sprintf("%%%s%%", params.Search))
+	}
+
+	err := query.Preload("User").Offset(params.Offset).Limit(params.Limit).Find(&postsResponse).Error
+
+	return &postsResponse, err
 }
