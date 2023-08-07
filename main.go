@@ -5,6 +5,7 @@ import (
 	"gin-socmed/config"
 	"gin-socmed/dto"
 	"gin-socmed/helper"
+	"gin-socmed/router"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -31,6 +32,8 @@ func main() {
 		// errorhandler.HandleError(c, &errorhandler.InternalServerError{Message: "InternalServerError"})
 		// errorhandler.HandleError(c, &errorhandler.BadRequestError{Message: "BadRequestError"})
 	})
+
+	router.AuthRouter(api)
 
 	r.Run(fmt.Sprintf(":%v", config.ENV.PORT))
 }
