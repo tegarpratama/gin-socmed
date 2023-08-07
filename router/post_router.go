@@ -17,6 +17,9 @@ func PostRouter(api *gin.RouterGroup) {
 
 	r := api.Group("/tweets")
 
+	r.GET("/", postHandler.Get)
+	r.GET("/:id/detail", postHandler.Detail)
+
 	r.Use(middleware.JWTMiddleware())
 
 	r.POST("/", postHandler.Create)

@@ -6,3 +6,10 @@ type ResponseParams struct {
 	Paginate   *Paginate
 	Data       any
 }
+
+type FilterParams struct {
+	Page   int
+	Limit  int
+	Offset int
+	Search string
+}

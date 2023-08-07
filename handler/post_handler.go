@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -22,6 +23,61 @@ func NewPostHandler(service service.PostService) *postHandler {
 	return &postHandler{
 		service: service,
 	}
+}
+
+func (h *postHandler) Get(c *gin.Context) {
+	// 1. Without filter
+	// page := c.DefaultQuery("page", "1")
+	// limit := c.DefaultQuery("limit", "5")
+	// search := c.Query("search")
+
+	// pageNumber, _ := strconv.Atoi(page)
+	// limitNumber, _ := strconv.Atoi(limit)
+	// offset := (pageNumber - 1) * limitNumber
+
+	// posts, paginate, err := h.service.FindAll(&dto.FilterParams{
+	// 	Page:   pageNumber,
+	// 	Limit:  limitNumber,
+	// 	Offset: offset,
+	// 	Search: search,
+	// })
+
+	// 2. With filter
+	filter := helper.FilterParams(c)
+	posts, paginate, err := h.service.FindAll(filter)
+
+	if err != nil {
+		errorhandler.HandleError(c, err)
+		return
+	}
+
+	res := helper.Response(dto.ResponseParams{
+		StatusCode: http.StatusOK,
+		Message:    "List tweet's",
+		Paginate:   paginate,
+		Data:       posts,
+	})
+
+	c.JSON(http.StatusOK, res)
+}
+
+func (h *postHandler) Detail(c *gin.Context) {
+	idStr := c.Param("id")
+	idInt, _ := strconv.Atoi(idStr)
+	post, err := h.service.Detail(idInt)
+
+	if err != nil {
+		errorhandler.HandleError(c, err)
+		return
+	}
+
+	res := helper.Response(dto.ResponseParams{
+		StatusCode: http.StatusOK,
+		Message:    "Detail tweet",
+		Data:       post,
+	})
+
+	c.JSON(http.StatusOK, res)
 }
 
 func (h *postHandler) Create(c *gin.Context) {
