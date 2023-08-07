@@ -6,6 +6,8 @@ import (
 	"gin-socmed/errorhandler"
 	"gin-socmed/helper"
 	"gin-socmed/repository"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type AuthService interface {
@@ -15,21 +17,31 @@ type AuthService interface {
 
 type authService struct {
 	repository repository.AuthRepository
+	validator  *validator.Validate
 }
 
 func NewAuthService(r repository.AuthRepository) *authService {
 	return &authService{
 		repository: r,
+		validator:  validator.New(),
 	}
 }
 
 func (s *authService) Register(req *dto.RegisterRequest) error {
-	if emailExists := s.repository.EmailExists(req.Email); emailExists {
-		return &errorhandler.BadRequestError{Message: "email already registered"}
+	// custom validator
+	genderValidator := func(fl validator.FieldLevel) bool {
+		gender := fl.Field().String()
+		return gender == "male" || gender == "female"
 	}
 
-	if req.Password != req.PasswordConfirmation {
-		return &errorhandler.BadRequestError{Message: "password not match"}
+	s.validator.RegisterValidation("gender", genderValidator)
+
+	if err := s.validator.Struct(req); err != nil {
+		return &errorhandler.BadRequestError{Message: err.Error()}
+	}
+
+	if emailExists := s.repository.EmailExists(req.Email); emailExists {
+		return &errorhandler.BadRequestError{Message: "email already registered"}
 	}
 
 	passwordHash, err := helper.HashPassword(req.Password)
@@ -53,6 +65,10 @@ func (s *authService) Register(req *dto.RegisterRequest) error {
 
 func (s *authService) Login(req *dto.LoginRequest) (*dto.LoginResponse, error) {
 	var data dto.LoginResponse
+
+	if err := s.validator.Struct(req); err != nil {
+		return nil, &errorhandler.BadRequestError{Message: err.Error()}
+	}
 
 	user, err := s.repository.GetUserByEmail(req.Email)
 	if err != nil {

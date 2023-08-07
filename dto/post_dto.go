@@ -16,7 +16,7 @@ type PostsResponse struct {
 
 type PostRequest struct {
 	UserID  int                   `form:"user_id"`
-	Tweet   string                `form:"tweet"`
+	Tweet   string                `form:"tweet" binding:"required"`
 	Picture *multipart.FileHeader `form:"picture"`
 }
 

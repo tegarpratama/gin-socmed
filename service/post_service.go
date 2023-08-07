@@ -7,6 +7,8 @@ import (
 	"gin-socmed/repository"
 	"math"
 	"time"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type PostService interface {
@@ -20,11 +22,13 @@ type PostService interface {
 
 type postService struct {
 	repository repository.PostRepository
+	validator  *validator.Validate
 }
 
 func NewPostService(r repository.PostRepository) *postService {
 	return &postService{
 		repository: r,
+		validator:  validator.New(),
 	}
 }
 
@@ -60,6 +64,10 @@ func (s *postService) Detail(id int) (*dto.PostsResponse, error) {
 }
 
 func (s *postService) Create(req *dto.PostRequest) error {
+	if err := s.validator.Struct(req); err != nil {
+		return &errorhandler.BadRequestError{Message: err.Error()}
+	}
+
 	post := entity.Post{
 		UserID: req.UserID,
 		Tweet:  req.Tweet,
@@ -77,6 +85,10 @@ func (s *postService) Create(req *dto.PostRequest) error {
 }
 
 func (s *postService) Update(id int, req *dto.PostRequest) error {
+	if err := s.validator.Struct(req); err != nil {
+		return &errorhandler.BadRequestError{Message: err.Error()}
+	}
+
 	currentPost, err := (s).Detail(id)
 	if err != nil {
 		return err
