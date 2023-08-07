@@ -17,6 +17,10 @@ func main() {
 
 	r := gin.Default()
 
+	// Configuration static file
+	r.MaxMultipartMemory = 8 << 20
+	r.Static("/public", "./public")
+
 	api := r.Group("/api")
 
 	api.GET("/check-health", func(c *gin.Context) {
